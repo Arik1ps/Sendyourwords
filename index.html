@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Write Your Letter 💌</title>
+
+  <style>
+    body {
+      background: #ffe4b5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: sans-serif;
+      padding: 20px;
+      /* 2. Better text rendering on mobile */
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    /* 3. Ensure title doesn't overflow on tiny screens */
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 90%;
+      max-width: 400px;
+      height: 150px; /* Slightly taller for easier typing */
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      /* 4. Prevents iOS from auto-zooming on focus */
+      font-size: 16px; 
+      box-sizing: border-box;
+    }
+
+    select, button {
+      /* 5. Larger tap targets (min 44px height) */
+      width: 90%;
+      max-width: 400px;
+      padding: 14px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 12px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #ff8fab;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      /* 6. Removes the grey highlight on mobile taps */
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #link {
+      margin-top: 25px;
+      padding: 10px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      word-break: break-all;
+      font-size: 14px;
+      color: #555;
+    }
+    
+    #link a {
+      color: #d63384;
+      text-decoration: none;
+      border-bottom: 1px dashed #d63384;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Write your letter 💌</h2>
+
+<textarea id="letter" placeholder="Write something..."></textarea>
+
+<select id="theme">
+  <option value="romantic.html">Romantic 🌸</option>
+  <option value="dark.html">Dark 🖤</option>
+  <option value="birthday.html">Birthday 🎂</option>
+  <option value="night.html">Deep Night 🌌</option>
+</select>
+
+<button onclick="generateLink()" id="btn">Generate Link</button>
+<button onclick="copyLink()">Copy Link 📋</button>
+<p id="link"></p>
+
+<script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-database-compat.js"></script>
+
+<script>
+  // YOUR FIREBASE CONFIG (kept as provided)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBef7j-VGx409DSvf-cY4ZwGbtgkZ8Y0SY",
+    authDomain: "letter-36846.firebaseapp.com",
+    databaseURL: "https://letter-36846-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "letter-36846",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  function generateLink() {
+    let btn = document.getElementById("btn");
+    btn.innerText = "Generating...";
+
+    let text = document.getElementById("letter").value;
+    let theme = document.getElementById("theme").value;
+
+    if (!text.trim()) {
+      alert("Write something first 😅");
+      btn.innerText = "Generate Link";
+      return;
+    }
+
+    let id = Date.now().toString(36) + Math.random().toString(36).substring(2,5);
+
+    db.ref("letters/" + id).set({
+      message: text
+    }).then(() => {
+      let basePath = location.pathname.replace('index.html','');
+      let url = `${location.origin}${basePath}${theme}?id=${id}`;
+
+      document.getElementById("link").innerHTML =
+        `<a href="${url}" target="_blank">${url}</a>`;
+
+      btn.innerText = "Generate Link";
+    });
+  }
+
+  function copyLink() {
+    let link = document.querySelector("#link a");
+    if (!link) return;
+
+    navigator.clipboard.writeText(link.href);
+    alert("Link copied ✅");
+  }
+</script>
+
+</body>
+</html>
