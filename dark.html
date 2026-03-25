@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Letter 💌</title>
+  <style>
+body {
+  margin: 0;
+  background: linear-gradient(to top, #000000, #505050);
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ✅ responsive scene */
+.scene {
+  position: relative;
+  width: 90vw;
+  max-width: 320px;
+  height: auto;
+}
+
+/* ✅ responsive envelope */
+.envelope {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2; /* keeps shape */
+  background: #bcbcbc60;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  perspective: 1000px;
+}
+
+/* Flap */
+.flap {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #454545;
+  clip-path: polygon(0 0, 50% 60%, 100% 0);
+  transform-origin: top;
+  transition: transform 0.8s ease;
+  z-index: 2;
+  backface-visibility: hidden;
+}
+
+/* ✅ responsive letter */
+.letter {
+  position: absolute;
+  width: 90%;
+  height: 75%;
+  background: #b4b4b4;
+  left: 1.5%;
+  bottom: 0;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+
+  transform: translateY(100%);
+  transition: transform 0.8s ease;
+  z-index: 1;
+
+  overflow-y: auto;
+  word-wrap: break-word;
+  font-size: 14px;
+}
+
+/* OPEN STATE */
+.envelope.open .flap {
+  transform: rotateX(180deg);
+}
+
+.envelope.open .letter {
+  transform: translateY(-10%);
+}
+
+/* 🌸 Petals */
+.petals {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.petals span {
+  position: fixed;
+  top: -10px;
+  font-size: 20px;
+  animation: fall linear infinite;
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(-10px) translateX(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(100vh) translateX(var(--drift)) rotate(360deg);
+  }
+}
+
+/* ✅ FIX bouquet position for mobile */
+.bouquet {
+  position: absolute;
+  right: -20px;
+  bottom: -60px;
+
+  font-size: 70px;
+
+  opacity: 0;
+  transform: scale(0.5) rotate(-20deg);
+  transition: all 0.6s ease;
+}
+
+/* show when open */
+.envelope.open + .bouquet {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+/* ✅ small screens extra fix */
+@media (max-width: 400px) {
+  .letter {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .bouquet {
+    font-size: 60px;
+    right: -10px;
+    bottom: -50px;
+  }
+}
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="scene">
+
+    <div class="envelope" onclick="openLetter()">
+      <div class="flap"></div>
+
+      <div class="letter">
+        <p id="message"></p>
+      </div>
+    </div>
+
+    <!-- bouquet OUTSIDE envelope -->
+    <div class="bouquet">🥀</div>
+
+  </div>
+
+</div>
+<script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-database-compat.js"></script>
+<script>
+  function openLetter() {
+  document.querySelector(".envelope").classList.toggle("open");
+}
+
+// TEMP: simulate message from URL
+// 🔥 Firebase config (same as main page)
+const firebaseConfig = {
+  apiKey: "AIzaSyBef7j-VGx409DSvf-cY4ZwGbtgkZ8Y0SY",
+  authDomain: "letter-36846.firebaseapp.com",
+  databaseURL: "https://letter-36846-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "letter-36846",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ✅ Load message using ID
+function loadMessage() {
+  let params = new URLSearchParams(window.location.search);
+  let id = params.get("id");
+
+  if (!id) {
+    document.getElementById("message").innerText = "No letter found 😢";
+    return;
+  }
+
+  db.ref("letters/" + id).once("value", snapshot => {
+    let data = snapshot.val();
+
+    if (data) {
+      document.getElementById("message").innerText = data.message;
+    } else {
+      document.getElementById("message").innerText = "Letter not found 😢";
+    }
+  });
+}
+
+loadMessage();
+function createPetal() {
+  let petal = document.createElement("span");
+  petal.innerText = "🖤";
+
+  let size = 10 + Math.random() * 20;
+  petal.style.fontSize = size + "px";
+
+  petal.style.left = Math.random() * window.innerWidth + "px";
+
+  let duration = 4 + Math.random() * 6;
+  petal.style.animationDuration = duration + "s";
+
+  let drift = (Math.random() - 0.5) * 200;
+  petal.style.setProperty("--drift", drift + "px");
+
+  document.querySelector(".petals").appendChild(petal);
+
+  setTimeout(() => {
+    petal.remove();
+  }, duration * 1000);
+}
+
+setInterval(createPetal, 300);
+</script>
+<div class="petals"></div>
+</body>
+</html>

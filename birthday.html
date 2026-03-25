@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Happy Birthday 🎉</title>
+  <style>
+body {
+  margin: 0;
+  background: linear-gradient(to top, #ff9a9e, #fad0c4);
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.scene {
+  position: relative;
+  width: 90vw;
+  max-width: 320px;
+}
+
+.envelope {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  background: #fff0f5;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  perspective: 1000px;
+}
+
+.flap {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #ff69b4;
+  clip-path: polygon(0 0, 50% 60%, 100% 0);
+  transform-origin: top;
+  transition: transform 0.8s ease;
+  z-index: 2;
+}
+
+.letter {
+  position: absolute;
+  width: 90%;
+  height: 75%;
+  background: white;
+  left: 1.5%;
+  bottom: 0;
+  border-radius: 8px;
+  padding: 12px;
+
+  transform: translateY(100%);
+  transition: transform 0.8s ease;
+
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+/* open */
+.envelope.open .flap {
+  transform: rotateX(180deg);
+}
+
+.envelope.open .letter {
+  transform: translateY(-10%);
+}
+
+/* 🎂 Cake (fixed for mobile) */
+.cake {
+  position: absolute;
+  bottom: -60px;
+  right: -10px;
+  font-size: 100px;
+  
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.6s ease;
+}
+
+.envelope.open + .cake {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 🎈 Balloons */
+.balloons span {
+  position: fixed;
+  bottom: -50px;
+  font-size: 24px;
+  animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+  to {
+    transform: translateY(-120vh);
+  }
+}
+
+/* 💥 Fireworks */
+.fireworks span {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: explode 1s ease-out forwards;
+}
+
+@keyframes explode {
+  0% {
+    transform: translate(0,0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--x), var(--y));
+    opacity: 0;
+  }
+}
+
+/* ✅ small screen improvements */
+@media (max-width: 400px) {
+  .letter {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .cake {
+    font-size: 50px;
+    bottom: -40px;
+    right: 0;
+  }
+
+  .balloons span {
+    font-size: 20px;
+  }
+}
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="scene">
+
+    <div class="envelope" onclick="openLetter()">
+      <div class="flap"></div>
+
+      <div class="letter">
+        <p id="message"></p>
+      </div>
+    </div>
+
+    <!-- Cake -->
+    <div class="cake">🎂</div>
+
+  </div>
+
+</div>
+
+<div class="balloons"></div>
+
+<div class="fireworks"></div>
+<script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-database-compat.js"></script>
+<script>
+function openLetter() {
+  let env = document.querySelector(".envelope");
+  env.classList.toggle("open");
+
+  if (!exploded) {
+    exploded = true;
+
+    // center explosion
+    createFirework(window.innerWidth/2, window.innerHeight/2);
+
+    // optional: multiple bursts
+    setTimeout(() => createFirework(200, 300), 200);
+    setTimeout(() => createFirework(300, 200), 400);
+  }
+}
+// TEMP: simulate message from URL
+// 🔥 Firebase config (same as main page)
+const firebaseConfig = {
+  apiKey: "AIzaSyBef7j-VGx409DSvf-cY4ZwGbtgkZ8Y0SY",
+  authDomain: "letter-36846.firebaseapp.com",
+  databaseURL: "https://letter-36846-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "letter-36846",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ✅ Load message using ID
+function loadMessage() {
+  let params = new URLSearchParams(window.location.search);
+  let id = params.get("id");
+
+  if (!id) {
+    document.getElementById("message").innerText = "Happy Birthday🎂";
+    return;
+  }
+
+  db.ref("letters/" + id).once("value", snapshot => {
+    let data = snapshot.val();
+
+    if (data) {
+      document.getElementById("message").innerText = data.message;
+    } else {
+      document.getElementById("message").innerText = "Letter not found 😢";
+    }
+  });
+}
+
+loadMessage();
+
+// 🎈 balloons
+function createBalloon() {
+  let balloon = document.createElement("span");
+  let colors = ["🎈","🎉","✨"];
+  balloon.innerText = colors[Math.floor(Math.random()*colors.length)];
+
+  balloon.style.left = Math.random() * window.innerWidth + "px";
+  balloon.style.animationDuration = (4 + Math.random()*6) + "s";
+
+  document.querySelector(".balloons").appendChild(balloon);
+
+  setTimeout(() => balloon.remove(), 10000);
+}
+
+setInterval(createBalloon, 500);
+
+let exploded = false;
+
+function createFirework(x, y) {
+  let colors = ["#ff4d6d","#ffd166","#06d6a0","#4cc9f0","#f72585"];
+
+  for (let i = 0; i < 30; i++) {
+    let particle = document.createElement("span");
+
+    let angle = Math.random() * 2 * Math.PI;
+    let distance = 50 + Math.random() * 100;
+
+    let dx = Math.cos(angle) * distance;
+    let dy = Math.sin(angle) * distance;
+
+    particle.style.left = x + "px";
+    particle.style.top = y + "px";
+
+    particle.style.setProperty("--x", dx + "px");
+    particle.style.setProperty("--y", dy + "px");
+
+    particle.style.background = colors[Math.floor(Math.random()*colors.length)];
+
+    document.querySelector(".fireworks").appendChild(particle);
+
+    setTimeout(() => particle.remove(), 1000);
+  }
+}
+</script>
+</body>
+</html>
